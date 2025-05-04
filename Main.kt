@@ -1,67 +1,147 @@
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
-// IMPORT
+import androidx.compose.desktop.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.application
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import java.text.SimpleDateFormat
+import java.util.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import androidx.compose.foundation.lazy.items
 
+fun obtenerHoraActual(): String {
+    val formato = SimpleDateFormat("HH:mm:ss", Locale.getDefault())
+    return formato.format(Date())
+}
 
-fun jugar(campo:Campo, m:Int) {
-    var minas = m
-    while (minas != 0) {
-        println("Comienza el juego")
-        println("1-. Destapar casilla")
-        println("2-. Poner bandera")
-        println("3-. Rendirse")
-        println("$minas minas restantes")
-        campo.mostrar()
-        print("Escribe ahora tu entrada: ")
-        var entrada = readln().toInt()
-        if (entrada == 1) {
-            if (destapar(campo) == true) {
-                println("¡Te ha explotado la mina!")
-                campo.revelar()
-                break
+// ESTA FUNCIÓN SE DEBE MODIFICAR, NO SIRVE PARA COMPOSE PORQUE SOLO IMPRIME POR CONSOLA
+@Composable
+fun recorrerCampo(campo: MutableList<MutableList<Char>>, f: Int, c: Int) {
+    val flattenedCampo = campo.flatten() // Convierte la matriz en una lista 1D
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(c), // Cantidad de columnas
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp),
+        contentPadding = PaddingValues(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        items(flattenedCampo.size) { index ->
+            val value = flattenedCampo[index]
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(2.dp)
+            ) {
+                Button(
+                    onClick = { /* Aquí puedes manejar clics en las celdas */ },
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Text(text = value.toString())
+                }
             }
-        } else if (entrada == 2) {
-            if (bandera(campo) == true) { minas=minas-1 }
-        } else if (entrada == 3) {
-            campo.revelar()
-            break
         }
     }
 }
 
+@Composable
+fun jugar(campo:Campo, m:Int) {
+    var minas=m
+    recorrerCampo(campo.falso, campo.fil, campo.col)
 
-fun main() {
-    println("Bienvenido a Buscaminas.")
-    println("Por favor, escribe las dimensiones de tu buscaminas")
-    println()
-    var jugar=1
-    while (jugar == 1) {
-        print("Escribe un numero de filas: ")
-        var filas = readln().toInt()
-        print("Escribe un numero de columnas: ")
-        var columnas = readln().toInt()
-        print("Escribe el numero de minas que quieres: ")
-        var minas = readln().toInt()
-        println()
-        Buscaminas(filas, columnas, minas)
-        println()
-        println("Quieres volver a jugar? (S/N)")
-        var volver= readln()
-        if (volver == "S" || volver == "s") { jugar == 1 }
-        else if (volver == "N" || volver == "n") { break }
+}
+
+
+
+@Composable
+@Preview
+fun App() {
+    MaterialTheme() {
+        // Reloj
+        var horaActual by remember { mutableStateOf(obtenerHoraActual()) }
+        LaunchedEffect(Unit) {
+            while (true) {
+                horaActual = obtenerHoraActual()
+                delay(1000L)
+            }
+        }
+
+        // Estados del campo
+        var filas by remember { mutableStateOf("") }
+        var columnas by remember { mutableStateOf("") }
+        var minas by remember { mutableStateOf("") }
+        var minasInt by remember { mutableStateOf(0) }
+
+        var campo by remember { mutableStateOf<Campo?>(null) }
+        var mostrarJuego by remember { mutableStateOf(false) }
+
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text("Bienvenido a Buscaminas")
+            Text("Reloj: $horaActual")
+            Text("Pon el número de filas, columnas y minas del campo")
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextField(
+                    value = filas,
+                    onValueChange = { filas = it },
+                    label = { Text("Filas") }
+                )
+                TextField(
+                    value = columnas,
+                    onValueChange = { columnas = it },
+                    label = { Text("Columnas") }
+                )
+                TextField(
+                    value = minas,
+                    onValueChange = { minas = it },
+                    label = { Text("Minas") }
+                )
+            }
+
+            Button(onClick = {
+                val f = filas.toIntOrNull() ?: 0
+                val c = columnas.toIntOrNull() ?: 0
+                val m = minas.toIntOrNull() ?: 0
+
+                if (f > 0 && c > 0 && m >= 0) {
+                    campo = Campo(f, c, m)
+                    minasInt = m
+                    mostrarJuego = true
+                }
+            }) {
+                Text("Generar Campo")
+            }
+
+            if (mostrarJuego && campo != null) {
+                jugar(campo!!, minasInt)
+            }
+        }
+    }
+}
+
+fun main() = application {
+    Window(
+        onCloseRequest = ::exitApplication,
+        title = "Buscaminas"
+    ) {
+        App()
     }
 }
