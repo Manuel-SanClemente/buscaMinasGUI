@@ -27,13 +27,12 @@ fun obtenerHoraActual(): String {
     return formato.format(Date())
 }
 
-// ESTA FUNCIÓN SE DEBE MODIFICAR, NO SIRVE PARA COMPOSE PORQUE SOLO IMPRIME POR CONSOLA
 @Composable
 fun recorrerCampo(campo: MutableList<MutableList<Char>>, f: Int, c: Int) {
-    val flattenedCampo = campo.flatten() // Convierte la matriz en una lista 1D
+    val flattenedCampo = campo.flatten()
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(c), // Cantidad de columnas
+        columns = GridCells.Fixed(c),
         modifier = Modifier
             .fillMaxWidth()
             .height(400.dp),
